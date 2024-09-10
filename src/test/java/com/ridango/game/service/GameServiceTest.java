@@ -62,6 +62,50 @@ public class GameServiceTest {
 
   }
 
+  private CocktailData buildCocktailData(String name, String id, String ingredients) {
+    return CocktailData.builder()
+        .name(name)
+        .cocktailId(id)
+        .ingredients(ingredients)
+        .recipe("Sample Recipe")
+        .category("Cocktail")
+        .pictureURL("https://image.url")
+        .glass("Glass Type")
+        .build();
+  }
+
+  private SessionData buildSessionData(int id, String name, CocktailData cocktailData, String currentName, int score,
+      int attemptsLeft, String ingredients, String category) {
+    return SessionData.builder()
+        .sessionDataId(id)
+        .name(name)
+        .cocktailId(cocktailData.getCocktailId())
+        .currentCocktailNameFull(cocktailData.getName())
+        .currentCocktailName(currentName)
+        .currentRecipe(cocktailData.getRecipe())
+        .attemptsLeft(attemptsLeft)
+        .ingredients(ingredients)
+        .category(category)
+        .score(score)
+        .build();
+  }
+
+  private SessionDataDto buildSessionDataDto(int sessionDataId, int attemptsLeft, String ingredients,
+      String currentCocktailname, String pictureUrl, String glass, String category, int score) {
+    return SessionDataDto.builder()
+        .sessionDataId(1)
+        .name("Player")
+        .attemptsLeft(attemptsLeft)
+        .ingredients(ingredients)
+        .category(category)
+        .currentCocktailName(currentCocktailname)
+        .currentRecipe("Sample Recipe")
+        .pictureURL(pictureUrl)
+        .glass(glass)
+        .score(score)
+        .build();
+  }
+
   @Test
   void test_register_when_insertName_do_createAndSaveSessionDataAndFirstCocktail_return_sessionData() {
     when(cocktailService.getNextCocktailData()).thenReturn(cocktailData);
@@ -140,11 +184,12 @@ public class GameServiceTest {
 
   @Test
   void test_reactToAnswer_when_wrongAnswerAndSessionDataDto_do_revealClues_return_sessionDataDto() {
-    SessionDataDto sessionDataDto = buildSessionDataDto(1, 5, "", "___ ______ ______", "",  "", "", 0);
+    SessionDataDto sessionDataDto = buildSessionDataDto(1, 5, "", "___ ______ ______", "", "", "", 0);
     SessionDataDto newSessionDataDto = buildSessionDataDto(1, 4, "Vodka", "___ _a____ ______", "", "", "Cocktail", 0);
-    
-    SessionData newSessionData = buildSessionData(1, "Player", cocktailData, "___ _a____ ______", 0, 4, "Vodka", "Cocktail");
-        String answer = "Wrong";
+
+    SessionData newSessionData = buildSessionData(1, "Player", cocktailData, "___ _a____ ______", 0, 4, "Vodka",
+        "Cocktail");
+    String answer = "Wrong";
     GameService gameServiceSpy = Mockito.spy(gameService);
 
     doReturn(sessionData).when(sessionDataRepository).findBySessionDataId(sessionDataDto.getSessionDataId());
@@ -159,62 +204,35 @@ public class GameServiceTest {
 
   @Test
   void test_reactToAnswer_when_rightAnswer_do_fetchNewCocktailData_return_nextRoundSessionData() {
-    SessionDataDto sessionDataDto = buildSessionDataDto(1, 5, "", "___ ______ ______", "",  "", "", 0);
+    SessionDataDto sessionDataDto = buildSessionDataDto(1, 5, "", "___ ______ ______", "", "", "", 0);
     SessionDataDto newSessionDataDto = buildSessionDataDto(1, 5, "", "___ ______ __________", "", "", "", 5);
-    
-    String answer = "The Johhny Silverhand";
+
+    String answer = "The Jackie Welles";
     GameService gameServiceSpy = Mockito.spy(gameService);
-    
-    doReturn(nextCocktailData).when(cocktailService).getNextCocktailData();
+
+    doReturn(sessionData).when(sessionDataRepository).findBySessionDataId(sessionDataDto.getSessionDataId());
+    when(cocktailService.getNextCocktailData()).thenReturn(nextCocktailData);
     doReturn(nextRoundData).when(gameServiceSpy).nextRound(sessionData);
 
     SessionDataDto result = gameServiceSpy.reactToAnswer(sessionDataDto, answer);
     assertEquals(newSessionDataDto.toString(), result.toString());
     assertTrue(newSessionDataDto.equals(result));
   }
+  @Test
+  void test_reactToAnswer_when_wrongAnswerNoAttemptsLeft_do_removeAllAttempts_return_sessionDataDto() {
+    SessionDataDto sessionDataDto = buildSessionDataDto(1, 1, "", "___ ______ ______", "", "", "", 0);
+    SessionDataDto newSessionDataDto = buildSessionDataDto(1, 0, "", "___ ______ ______", "", "", "", 0);
+    SessionData noAttemptsData = buildSessionData(1, "Player", cocktailData, "___ ______ ______", 0, 1, "",
+    "");
+    String answer = "Wrong";
+    GameService gameServiceSpy = Mockito.spy(gameService);
 
-  
-
-  private CocktailData buildCocktailData(String name, String id, String ingredients) {
-    return CocktailData.builder()
-        .name(name)
-        .cocktailId(id)
-        .ingredients(ingredients)
-        .recipe("Sample Recipe")
-        .category("Cocktail")
-        .pictureURL("https://image.url")
-        .glass("Glass Type")
-        .build();
+    doReturn(noAttemptsData).when(sessionDataRepository).findBySessionDataId(sessionDataDto.getSessionDataId());
+ 
+    SessionDataDto result = gameServiceSpy.reactToAnswer(sessionDataDto, answer);
+    assertEquals(newSessionDataDto.toString(), result.toString());
+    assertTrue(newSessionDataDto.equals(result));
   }
 
-  private SessionData buildSessionData(int id, String name, CocktailData cocktailData, String currentName, int score, int attemptsLeft, String ingredients, String category) {
-    return SessionData.builder()
-        .sessionDataId(id)
-        .name(name)
-        .cocktailId(cocktailData.getCocktailId())
-        .currentCocktailNameFull(cocktailData.getName())
-        .currentCocktailName(currentName)
-        .currentRecipe(cocktailData.getRecipe())
-        .attemptsLeft(attemptsLeft)
-        .ingredients(ingredients)
-        .category(category)
-        .score(score)
-        .build();
-  }
 
-  private SessionDataDto buildSessionDataDto(int sessionDataId, int attemptsLeft, String ingredients,
-      String currentCocktailname, String pictureUrl, String glass, String category, int score) {
-    return SessionDataDto.builder()
-        .sessionDataId(1)
-        .name("Player")
-        .attemptsLeft(attemptsLeft)
-        .ingredients(ingredients)
-        .category(category)
-        .currentCocktailName(currentCocktailname)
-        .currentRecipe("Sample Recipe")
-        .pictureURL(pictureUrl)
-        .glass(glass)
-        .score(score)
-        .build();
-  }
 }

@@ -1,5 +1,7 @@
 package com.ridango.game.service;
 
+import static org.mockito.ArgumentMatchers.anyBoolean;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -117,7 +119,16 @@ public class GameService {
 
     public SessionDataDto reactToAnswer(SessionDataDto sessionDataDto, String answer) {
         SessionData sessionData = sessionDataRepository.findBySessionDataId(sessionDataDto.getSessionDataId());
-        sessionData = reactToMistake(sessionData);
+        if (answer.equals(sessionData.getCurrentCocktailNameFull())) {
+            System.err.println(sessionData.getCurrentCocktailNameFull());
+            sessionData = nextRound(sessionData);
+        } else if (!answer.equals(sessionData.getCurrentCocktailNameFull())) {
+            if (sessionData.getAttemptsLeft() == 1) {
+                sessionData.setAttemptsLeft(0);
+            } else {
+                sessionData = reactToMistake(sessionData);
+            }
+        }
         sessionDataRepository.save(sessionData);
         return modelMapper.map(sessionData, SessionDataDto.class);
     }
