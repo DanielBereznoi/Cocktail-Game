@@ -12,7 +12,7 @@ public class WebService {
     private WebClient webClient;
 
      public String callCocktailAPI(String uri) {
-        System.err.println("url: " + uri);
+       // System.err.println("url: " + uri);
         
         String response = webClient.get().uri(uri).retrieve().bodyToMono(String.class).block();
         return StringEscapeUtils.unescapeJava(response);

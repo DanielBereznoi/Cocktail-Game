@@ -7,7 +7,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
-import org.apache.commons.lang3.builder.ToStringExclude;
+import org.hibernate.annotations.Type;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,6 +30,7 @@ public class CocktailData {
     private String name;
     private String cocktailId;
     private String ingredients;
+    @Type(type="org.hibernate.type.TextType")
     private String recipe;
     private String category;
     private String pictureURL;

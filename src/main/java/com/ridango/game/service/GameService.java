@@ -1,11 +1,9 @@
 package com.ridango.game.service;
 
-import static org.mockito.ArgumentMatchers.anyBoolean;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,13 +35,16 @@ public class GameService {
     @Autowired
     ModelMapper modelMapper;
 
-    public SessionData register(String name) {
+    public SessionDataDto register(String name) {
         SessionData sessionData = SessionData.builder().name(name).build();
         CocktailData cocktailData = cocktailService.getNextCocktailData();
+        
+        // TODO: Delete
+        //System.out.println(cocktailData.getName());
         sessionData = insertCommonCocktailData(sessionData, cocktailData);
         cocktailData.setSession(sessionData);
         sessionData.setPastCocktails(List.of(cocktailData));
-        return sessionDataRepository.save(sessionData);
+        return modelMapper.map(sessionDataRepository.save(sessionData), SessionDataDto.class);
     }
 
     public SessionData reactToMistake(SessionData sessionData) {
@@ -64,7 +65,7 @@ public class GameService {
             sessionData.setCurrentCocktailName(newCurrentCocktailName.toString());
         }
 
-        CocktailData cocktailData = cocktailDataRepository.findByCocktailId(sessionData.getCocktailId());
+        CocktailData cocktailData = cocktailDataRepository.findByCocktailId(sessionData.getCocktailId()).get(0);
         String category = cocktailData.getCategory();
         List<String> shownIngredients = (sessionData.getIngredients().isEmpty()) ? new ArrayList<>()
                 : new ArrayList<>(Arrays.asList(sessionData.getIngredients().split(",")));
@@ -88,9 +89,19 @@ public class GameService {
     }
 
     public SessionData nextRound(SessionData sessionData) {
+        List<String> cocktailIds = new ArrayList<>();
         sessionData.setScore(sessionData.getScore() + sessionData.getAttemptsLeft());
         sessionData.setAttemptsLeft(5);
-        CocktailData newCocktailData = cocktailService.getNextCocktailData();
+        sessionData.getPastCocktails().forEach(coctail -> cocktailIds.add(coctail.getCocktailId()));
+        CocktailData newCocktailData;
+        while (true) {
+            newCocktailData = cocktailService.getNextCocktailData();
+            if (!cocktailIds.contains(newCocktailData.getCocktailId())) {
+                break;
+            }
+        }
+        // TODO: Delete
+        //System.out.println(newCocktailData.getName());
         sessionData = insertCommonCocktailData(sessionData, newCocktailData);
         newCocktailData.setSession(sessionData);
         List<CocktailData> pastCocktails = new ArrayList<>(sessionData.getPastCocktails());
@@ -101,15 +112,16 @@ public class GameService {
 
     private SessionData insertCommonCocktailData(SessionData sessionData, CocktailData cocktailData) {
         sessionData.setCocktailId(cocktailData.getCocktailId());
-        sessionData.setCurrentCocktailName(String.valueOf(cocktailData.getName()).replaceAll("[a-zA-Z]", "_"));
+        sessionData.setCurrentCocktailName(String.valueOf(cocktailData.getName()).replaceAll("[a-zA-Z0-9]", "_"));
         sessionData.setCurrentCocktailNameFull(cocktailData.getName());
         sessionData.setCurrentRecipe(cocktailData.getRecipe());
         return sessionData;
     }
 
-    public Highscore endGame(SessionData sessionData) {
-        Highscore highscore = highscoreRepository.findAll().get(0);
+    public Highscore endGame(SessionDataDto sessionData) {
+        Highscore highscore = (!highscoreRepository.findAll().isEmpty()) ? highscoreRepository.findAll().get(0) : new Highscore(0, "", -1);
         if (highscore.getScore() < sessionData.getScore()) {
+            highscore.setScoreId(0);
             highscore.setPlayerName(sessionData.getName());
             highscore.setScore(sessionData.getScore());
             return highscoreRepository.save(highscore);
@@ -119,16 +131,17 @@ public class GameService {
 
     public SessionDataDto reactToAnswer(SessionDataDto sessionDataDto, String answer) {
         SessionData sessionData = sessionDataRepository.findBySessionDataId(sessionDataDto.getSessionDataId());
-        if (answer.equals(sessionData.getCurrentCocktailNameFull())) {
-            System.err.println(sessionData.getCurrentCocktailNameFull());
+        if (answer.toLowerCase().equals(sessionData.getCurrentCocktailNameFull().toLowerCase())) {
+            //System.err.println(sessionData.getCurrentCocktailNameFull());
             sessionData = nextRound(sessionData);
-        } else if (!answer.equals(sessionData.getCurrentCocktailNameFull())) {
+        } else  {
             if (sessionData.getAttemptsLeft() == 1) {
                 sessionData.setAttemptsLeft(0);
             } else {
                 sessionData = reactToMistake(sessionData);
             }
         }
+        //System.out.println("debug " + sessionData.getCurrentCocktailNameFull());
         sessionDataRepository.save(sessionData);
         return modelMapper.map(sessionData, SessionDataDto.class);
     }

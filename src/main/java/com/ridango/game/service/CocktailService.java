@@ -26,9 +26,15 @@ public class CocktailService {
 
     public CocktailData getNextCocktailData() {
         String randomCocktailUrl = "https://www.thecocktaildb.com/api/json/v1/1/random.php";
-        String cocktailJSONString = webService.callCocktailAPI(randomCocktailUrl);
-        CocktailData cocktailData = parseCocktailJSON(cocktailJSONString);
-        System.err.println("data: " + cocktailData.toString());
+        CocktailData cocktailData;
+        while (true) {
+            String cocktailJSONString = webService.callCocktailAPI(randomCocktailUrl);
+            cocktailData = parseCocktailJSON(cocktailJSONString);
+            if (cocktailData != null) {
+                break;
+            }
+        }
+        // System.err.println("data: " + cocktailData.toString());
         return cocktailData;
     }
 
@@ -57,7 +63,5 @@ public class CocktailService {
         }
         return null;
     }
-
-   
 
 }

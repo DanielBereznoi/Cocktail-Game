@@ -6,7 +6,6 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.ridango.game.dto.SessionDataDto;
@@ -107,19 +106,18 @@ public class GameServiceTest {
   }
 
   @Test
-  void test_register_when_insertName_do_createAndSaveSessionDataAndFirstCocktail_return_sessionData() {
+  void test_register_when_insertName_do_createAndSaveSessionDataAndFirstCocktail_return_sessionDataDto() {
     when(cocktailService.getNextCocktailData()).thenReturn(cocktailData);
     when(sessionDataRepository.save(any(SessionData.class))).thenReturn(sessionData);
+    SessionDataDto sessionDataDto = buildSessionDataDto(1, 5, "", "___ ______ ______", "", "", "", 0);
 
-    SessionData result = gameService.register(sessionData.getName());
-    assertTrue(sessionData.equals(result));
-    List<CocktailData> savedCocktails = result.getPastCocktails();
-    assertEquals(1, savedCocktails.size());
+    SessionDataDto result = gameService.register(sessionData.getName());
+    assertTrue(sessionDataDto.equals(result));
   }
 
   @Test
   void test_reactToMistakeOrSkip_when_insertSessionDataFirstOrSecondMistake_return_sessionDataWithClues() {
-    when(mockedCocktailRepo.findByCocktailId(sessionData.getCocktailId())).thenReturn(cocktailData);
+    when(mockedCocktailRepo.findByCocktailId(sessionData.getCocktailId())).thenReturn(List.of(cocktailData));
     SessionData result = gameService.reactToMistake(sessionData);
     test_reactToMistakeOrSkip_commonAsserts(result, cocktailData, 1, 4, 1);
   }
@@ -129,7 +127,7 @@ public class GameServiceTest {
     sessionData.setAttemptsLeft(3);
     sessionData.setIngredients("Vodka,Lime juice");
     sessionData.setCurrentCocktailName("T__ __l___ ______");
-    when(mockedCocktailRepo.findByCocktailId(sessionData.getCocktailId())).thenReturn(cocktailData);
+    when(mockedCocktailRepo.findByCocktailId(sessionData.getCocktailId())).thenReturn(List.of(cocktailData));
     SessionData result = gameService.reactToMistake(sessionData);
     test_reactToMistakeOrSkip_commonAsserts(result, cocktailData, 3, 2, 2);
     assertEquals(cocktailData.getGlass(), result.getGlass(), "Glass mismatch");
@@ -140,7 +138,7 @@ public class GameServiceTest {
     sessionData.setAttemptsLeft(2);
     sessionData.setIngredients("Vodka,Lime juice,Ginger Beer");
     sessionData.setCurrentCocktailName("T__ __l___ W_____");
-    when(mockedCocktailRepo.findByCocktailId(sessionData.getCocktailId())).thenReturn(cocktailData);
+    when(mockedCocktailRepo.findByCocktailId(sessionData.getCocktailId())).thenReturn(List.of(cocktailData));
     SessionData result = gameService.reactToMistake(sessionData);
     test_reactToMistakeOrSkip_commonAsserts(result, cocktailData, 3, 1, 3);
     assertEquals(cocktailData.getGlass(), result.getGlass(), "Glass mismatch");
@@ -166,19 +164,21 @@ public class GameServiceTest {
 
   @Test
   void test_endGame_noHighscore() {
+    SessionDataDto newSessionDataDto = buildSessionDataDto(1, 0, "", "___ ______ ______", "", "", "", 0);
     Highscore highscore = new Highscore(9, "Player", 23);
     when(highscoreRepository.findAll()).thenReturn(List.of(highscore));
-    Highscore result = gameService.endGame(sessionData);
+    Highscore result = gameService.endGame(newSessionDataDto);
     assertTrue(highscore.equals(result));
   }
 
   @Test
   void test_endGame_newHighscore() {
+    SessionDataDto newSessionDataDto = buildSessionDataDto(1, 0, "", "___ ______ ______", "", "", "", 0);
     Highscore highscore = new Highscore(9, "Player", -23);
     Highscore newHighscore = new Highscore(9, "Player", 0);
     when(highscoreRepository.findAll()).thenReturn(List.of(highscore));
     when(highscoreRepository.save(highscore)).thenReturn(newHighscore);
-    Highscore result = gameService.endGame(sessionData);
+    Highscore result = gameService.endGame(newSessionDataDto);
     assertTrue(newHighscore.equals(result));
   }
 
@@ -193,7 +193,7 @@ public class GameServiceTest {
     GameService gameServiceSpy = Mockito.spy(gameService);
 
     doReturn(sessionData).when(sessionDataRepository).findBySessionDataId(sessionDataDto.getSessionDataId());
-    doReturn(cocktailData).when(mockedCocktailRepo).findByCocktailId(sessionData.getCocktailId());
+    doReturn(List.of(cocktailData)).when(mockedCocktailRepo).findByCocktailId((sessionData.getCocktailId()));
     doReturn(newSessionData).when(gameServiceSpy).reactToMistake(sessionData);
     Mockito.when(sessionDataRepository.save(any(SessionData.class))).thenReturn(newSessionData);
 

@@ -11,7 +11,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 
-import org.apache.commons.lang3.builder.ToStringExclude;
+import org.hibernate.annotations.Type;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,7 +37,8 @@ public class SessionData {
     private Integer attemptsLeft = 5;
     private String cocktailId;
     private String currentCocktailNameFull;
-    private String currentCocktailName;
+    private String currentCocktailName;   
+    @Type(type="org.hibernate.type.TextType")
     private String currentRecipe;
     @Builder.Default
     private String category = "";

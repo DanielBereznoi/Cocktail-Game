@@ -5,20 +5,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureDataJpa;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.ridango.game.entity.SessionData;
+import com.ridango.game.service.GameService;
 
 
-@DataJpaTest
-@AutoConfigureDataJpa
+@SpringBootTest
 @ActiveProfiles("test")
 public class SessionDataRepositoryIT {
 
     @Autowired
     SessionDataRepository sessionDataRepository;
+
+
+    @Autowired
+    GameService gameService;
 
     @Test
     void test_save_session_data() {
