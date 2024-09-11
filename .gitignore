@@ -1,8 +1,66 @@
+# Ignore build output directories
+/build/
 .gradle/
-build/
-.gradle
+.bin/
 
-### VS Code ###
+# Ignore IDE settings
+.idea/
 .vscode/
-.gradle/7.5.1/executionHistory/executionHistory.bin
-.gradle/7.5.1/executionHistory/executionHistory.lock
+
+# Ignore Gradle wrapper files
+gradle/wrapper/gradle-wrapper.jar
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
+
+# Ignore log files
+*.log
+
+# Ignore dependency caches
+**/build/
+**/out/
+!gradle/wrapper/gradle-wrapper.properties
+
+# Ignore temporary files
+*.swp
+*.temp
+*.tmp
+
+# Ignore compiled files
+*.class
+*.jar
+*.war
+*.ear
+
+# Ignore generated files from annotations
+*.generated
+
+# Ignore coverage reports
+*.lcov
+*.coverage
+*.clover
+coverage/
+
+# Ignore Gradle local properties (like SDK paths)
+local.properties
+
+# Ignore IntelliJ IDEA project files
+.idea/
+*.iml
+
+# Ignore Eclipse/IDEA/VSCode project files
+.project
+.classpath
+.c9/
+
+# Ignore Python virtual environments
+.venv/
+.env/
+
+# Ignore JUnit files
+test-results/
+
+# Ignore other unnecessary files
+.gradle/
+.gradle-cache/
